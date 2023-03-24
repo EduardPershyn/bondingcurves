@@ -1,0 +1,23 @@
+{
+  "name": "bondingcurves",
+  "version": "1.0.0",
+  "description": "ERC1363 Tokens and Bonding Curves",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/EduardPershyn/bondingcurves.git"
+  },
+  "author": "EduardPershyn",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/EduardPershyn/bondingcurves/issues"
+  },
+  "homepage": "https://github.com/EduardPershyn/bondingcurves#readme",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^2.0.2",
+    "hardhat": "^2.13.0"
+  }
+}
