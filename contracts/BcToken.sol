@@ -30,12 +30,30 @@ contract BcToken is ERC1363 {
     }
 
     function mint(uint256 amount) external payable {
+        require(msg.value == getPriceForAmount(amount), "ERC20: must send total price");
+
+        _mint(msg.sender, amount);
+
+        _price += amount;
+    }
+
+    function burn(uint256 amount) external {
+        _mint(msg.sender, amount);
+        withdraw( getPriceForAmount(amount) );
+
+        _price -= amount;
+    }
+
+    function withdraw(uint256 price) internal {
+        require(address(this).balance >= price, "ERC20: not enough balance on the contract");
+        payable(msg.sender).transfer(price);
+    }
+
+    function getPriceForAmount(uint256 amount) view public returns (uint256) {
         uint256 totalPrice = (amount * _price) / 1 ether;
         require(totalPrice > 0, "ERC20: amount too low");
 
-        require(msg.value == totalPrice, "ERC20: must send total price");
-
-        _mint(msg.sender, amount);
+        return totalPrice;
     }
 
     /**
@@ -78,7 +96,7 @@ contract BcToken is ERC1363 {
             _transfer(from, to, amount);
             return true;
         }
-        return ERC20.transferFrom(from, to, amount);
+        return super.transferFrom(from, to, amount);
     }
 
     /**

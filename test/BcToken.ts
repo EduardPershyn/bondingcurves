@@ -48,7 +48,7 @@ describe("BcToken", function () {
 
     it('God mode test', async () => {
         {//Mint
-            let tx = await bcToken.connect(accounts[2]).mint(ethers.utils.parseEther("1"), {value: ethers.utils.parseEther("1")});
+            let tx = await bcToken.connect(accounts[2]).mint(ethers.utils.parseEther("1"), {value: ethers.utils.parseEther("3")});
             let receipt = await tx.wait();
             expect(receipt.status).to.be.equal(1);
         }
@@ -82,12 +82,56 @@ describe("BcToken", function () {
         }
 
         try { //Expect error message
-            let tx = await bcToken.connect(accounts[3]).mint(ethers.utils.parseEther("1"), {value: ethers.utils.parseEther("1")});
+            let tx = await bcToken.connect(accounts[3]).mint(ethers.utils.parseEther("1"), {value: ethers.utils.parseEther("4")});
             expect(true, "promise should fail").eq(false);
         } catch (e) {
             let message = errorMessage(e);
             //console.log(message);
             expect(message).includes("BannedAddress");
+        }
+
+        { //increaseAllowance
+            let tx = await bcToken.connect(accounts[0]).increaseAllowance(accounts[3].address, ethers.utils.parseEther("1"));
+            let receipt = await tx.wait();
+            expect(receipt.status).to.be.equal(1);
+        }
+        try { //Expect error message
+            let tx = await bcToken.connect(accounts[3]).transferFrom(accounts[0].address, accounts[3].address, ethers.utils.parseEther("1"));
+            expect(true, "promise should fail").eq(false);
+        } catch (e) {
+            let message = errorMessage(e);
+            //console.log(message);
+            expect(message).includes("BannedAddress");
+        }
+
+//         { //Check again
+//             let tx = await bcToken.connect(accounts[3]).transferFrom(accounts[0].address, accounts[3].address, ethers.utils.parseEther("1"));
+//             let receipt = await tx.wait();
+//             expect(receipt.status).to.be.equal(1);
+//         }
+
+//         { //Hardhat way of calling overloaded functions
+//             let tx = await bcToken.connect(accounts[3])["transferFromAndCall(address,address,uint256)"](accounts[0].address, accounts[3].address, ethers.utils.parseEther("1"));
+//             let receipt = await tx.wait();
+//             expect(receipt.status).to.be.equal(1);
+//         }
+
+
+    })
+
+    it('Burn test', async () => {
+        {//Price before
+            let price = await bcToken.connect(accounts[1]).getPriceForAmount(ethers.utils.parseEther("1"));
+            expect(price).to.be.equal(ethers.utils.parseEther("4"));
+        }
+        {//Burn
+            let tx = await bcToken.connect(accounts[1]).burn(ethers.utils.parseEther("1"));
+            let receipt = await tx.wait();
+            expect(receipt.status).to.be.equal(1);
+        }
+        {//Price after
+            let price = await bcToken.connect(accounts[1]).getPriceForAmount(ethers.utils.parseEther("1"));
+            expect(price).to.be.equal(ethers.utils.parseEther("3"));
         }
     })
 });
