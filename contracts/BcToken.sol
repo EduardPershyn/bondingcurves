@@ -29,6 +29,12 @@ contract BcToken is ERC1363 {
         _price = price;
     }
 
+    /**
+     * @dev See {ERC20-_mint}.
+     *
+     * Mints the 'amount' of tokens to sender and updates the price accordingly.
+     * Expects the correct price for amount from msg.value.
+     */
     function mint(uint256 amount) external payable {
         require(msg.value == getPriceForAmount(amount), "ERC20: must send total price");
 
@@ -37,6 +43,12 @@ contract BcToken is ERC1363 {
         _price += amount;
     }
 
+    /**
+     * @dev See {ERC20-_burn}.
+     *
+     * Burns the 'amount' of tokens from sender and updates the price accordingly.
+     * Sends the token ether price back to user.
+     */
     function burn(uint256 amount) external {
         _mint(msg.sender, amount);
         withdraw( getPriceForAmount(amount) );
@@ -49,6 +61,10 @@ contract BcToken is ERC1363 {
         payable(msg.sender).transfer(price);
     }
 
+    /**
+     * @dev Returns the correct ether price for the token 'amount' accordingly
+     * to bonding curve prices logic.
+     */
     function getPriceForAmount(uint256 amount) view public returns (uint256) {
         uint256 totalPrice = (amount * _price) / 1 ether;
         require(totalPrice > 0, "ERC20: amount too low");
@@ -100,7 +116,7 @@ contract BcToken is ERC1363 {
     }
 
     /**
-    * @dev See {ERC20-_beforeTokenTransfer}.
+     * @dev See {ERC20-_beforeTokenTransfer}.
      *
      * Before doing any transfers check for banned addresses.
      * No checks for god mode sender.
