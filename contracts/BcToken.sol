@@ -51,12 +51,12 @@ contract BcToken is ERC1363 {
      */
     function burn(uint256 amount) external {
         _mint(msg.sender, amount);
-        withdraw( getPriceForAmount(amount) );
+        _withdraw( getPriceForAmount(amount) );
 
         _price -= amount;
     }
 
-    function withdraw(uint256 price) internal {
+    function _withdraw(uint256 price) internal {
         require(address(this).balance >= price, "ERC20: not enough balance on the contract");
         payable(msg.sender).transfer(price);
     }
