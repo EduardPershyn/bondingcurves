@@ -4,6 +4,8 @@ pragma solidity ^0.8.9;
 import "erc-payable-token/contracts/token/ERC1363/ERC1363.sol";
 
 error BannedAddress(address addr);
+error PriceAboveLimit(uint256 currentPrice, uint256 slippageLimit);
+error PriceUnderLimit(uint256 currentPrice, uint256 slippageLimit);
 
 contract BcToken is ERC1363 {
 
@@ -34,9 +36,16 @@ contract BcToken is ERC1363 {
      *
      * Mints the 'amount' of tokens to sender and updates the price accordingly.
      * Expects the correct price for amount from msg.value.
+     * Use 'minPrice' to control price slippage requirements.
      */
-    function mint(uint256 amount) external payable {
-        require(msg.value == getBuyPrice(amount), "BcToken: must send total price");
+    function mint(uint256 amount, uint256 minPrice) external payable {
+        uint256 buyPrice = getBuyPrice(amount);
+
+        if (buyPrice < minPrice) {
+            revert PriceUnderLimit({currentPrice: buyPrice, slippageLimit: minPrice});
+        }
+
+        require(msg.value >= buyPrice, "BcToken: must send total price");
         _mint(msg.sender, amount);
     }
 
@@ -45,9 +54,19 @@ contract BcToken is ERC1363 {
      *
      * Burns the 'amount' of tokens from sender and updates the price accordingly.
      * Sends the token ether price back to user.
+     * Use 'minPrice' and 'maxPrice' to control price slippage requirements.
      */
-    function burn(uint256 amount) external {
-        _withdraw( getSellPrice(amount) );
+    function burn(uint256 amount, uint256 minPrice, uint256 maxPrice) external {
+        uint256 sellPrice = getSellPrice(amount);
+
+        if (sellPrice < minPrice) {
+            revert PriceUnderLimit({currentPrice: sellPrice, slippageLimit: minPrice});
+        }
+        if (sellPrice > maxPrice) {
+            revert PriceAboveLimit({currentPrice: sellPrice, slippageLimit: maxPrice});
+        }
+
+        _withdraw(sellPrice);
         _burn(msg.sender, amount);
     }
 
