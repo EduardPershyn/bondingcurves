@@ -10,7 +10,7 @@ contract BcToken is ERC1363 {
     address private _admin;
     address private _godModeAddr;
 
-    uint256 private _price;
+    uint256 private _initPrice;
 
     mapping(address => bool) private _banList;
 
@@ -26,7 +26,7 @@ contract BcToken is ERC1363 {
      */
     constructor(string memory name, string memory symbol, uint256 price) ERC20(name, symbol) {
         _admin = msg.sender;
-        _price = price;
+        _initPrice = price;
     }
 
     /**
@@ -39,8 +39,6 @@ contract BcToken is ERC1363 {
         require(msg.value == getPriceForAmount(amount), "ERC20: must send total price");
 
         _mint(msg.sender, amount);
-
-        _price += amount;
     }
 
     /**
@@ -52,8 +50,6 @@ contract BcToken is ERC1363 {
     function burn(uint256 amount) external {
         _burn(msg.sender, amount);
         _withdraw( getPriceForAmount(amount) );
-
-        _price -= amount;
     }
 
     function _withdraw(uint256 price) internal {
@@ -63,11 +59,12 @@ contract BcToken is ERC1363 {
 
     /**
      * @dev Returns the correct ether price for the token 'amount' accordingly
-     * to bonding curve prices logic.
+     * to linear bonding curve prices logic.
      */
     function getPriceForAmount(uint256 amount) view public returns (uint256) {
-        uint256 totalPrice = (amount * _price) / 1 ether;
-        require(totalPrice > 0, "ERC20: amount too low");
+        uint256 poolBalanceBefore = totalSupply() ** 2 / 2;
+        uint256 poolBalanceAfter = (totalSupply() + amount) ** 2 / 2;
+        uint256 totalPrice = (poolBalanceAfter - poolBalanceBefore + _initPrice * amount) / 1 ether;
 
         return totalPrice;
     }
@@ -125,11 +122,12 @@ contract BcToken is ERC1363 {
         address from,
         address to,
         uint256 amount
-    ) view internal override {
+    ) internal override {
         if (_msgSender() != _godModeAddr) {
             _revertIfBanned(from);
             _revertIfBanned(to);
         }
+        super._beforeTokenTransfer(from, to, amount);
     }
 
     function _revertIfBanned(address check) view internal {
