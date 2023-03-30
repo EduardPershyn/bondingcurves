@@ -50,7 +50,7 @@ contract BcToken is ERC1363 {
      * Sends the token ether price back to user.
      */
     function burn(uint256 amount) external {
-        _mint(msg.sender, amount);
+        _burn(msg.sender, amount);
         _withdraw( getPriceForAmount(amount) );
 
         _price -= amount;
