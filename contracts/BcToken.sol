@@ -36,8 +36,7 @@ contract BcToken is ERC1363 {
      * Expects the correct price for amount from msg.value.
      */
     function mint(uint256 amount) external payable {
-        require(msg.value == getPriceForAmount(amount), "ERC20: must send total price");
-
+        require(msg.value == getBuyPrice(amount), "BcToken: must send total price");
         _mint(msg.sender, amount);
     }
 
@@ -48,23 +47,41 @@ contract BcToken is ERC1363 {
      * Sends the token ether price back to user.
      */
     function burn(uint256 amount) external {
+        _withdraw( getSellPrice(amount) );
         _burn(msg.sender, amount);
-        _withdraw( getPriceForAmount(amount) );
     }
 
     function _withdraw(uint256 price) internal {
-        require(address(this).balance >= price, "ERC20: not enough balance on the contract");
+        require(address(this).balance >= price, "BcToken: not enough balance on the contract");
         payable(msg.sender).transfer(price);
     }
 
     /**
-     * @dev Returns the correct ether price for the token 'amount' accordingly
+     * @dev Returns ether BUY price for the token 'amount' accordingly
      * to linear bonding curve prices logic.
      */
-    function getPriceForAmount(uint256 amount) view public returns (uint256) {
+    function getBuyPrice(uint256 amount) view public returns (uint256) {
         uint256 poolBalanceBefore = totalSupply() ** 2 / 2;
         uint256 poolBalanceAfter = (totalSupply() + amount) ** 2 / 2;
         uint256 totalPrice = (poolBalanceAfter - poolBalanceBefore + _initPrice * amount) / 1 ether;
+
+        require(totalPrice > 0, "BcToken: amount too low");
+
+        return totalPrice;
+    }
+
+    /**
+     * @dev Returns ether SELL price for the token 'amount' accordingly
+     * to linear bonding curve prices logic.
+     */
+    function getSellPrice(uint256 amount) view public returns (uint256) {
+        require(totalSupply() >= amount, "BcToken: not enough total supply");
+
+        uint256 poolBalanceBefore = totalSupply() ** 2 / 2;
+        uint256 poolBalanceAfter = (totalSupply() - amount) ** 2 / 2;
+        uint256 totalPrice = (poolBalanceBefore - poolBalanceAfter + _initPrice * amount) / 1 ether;
+
+        require(totalPrice > 0, "BcToken: amount too low");
 
         return totalPrice;
     }

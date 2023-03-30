@@ -34,7 +34,7 @@ describe("BcToken", function () {
         }
 
 //         {
-//             let amountWei = await bcToken.connect(accounts[1]).getPriceForAmount(ethers.utils.parseEther("2"));
+//             let amountWei = await bcToken.connect(accounts[1]).getBuyPrice(ethers.utils.parseEther("2"));
 //             console.log(amountWei);
 //             let amountStr = ethers.utils.formatEther(amountWei);
 //             let amount = parseInt(amountStr, 10);
@@ -43,7 +43,7 @@ describe("BcToken", function () {
 
 
         {//Mint
-            let priceWei = await bcToken.connect(accounts[1]).getPriceForAmount(ethers.utils.parseEther("2"));
+            let priceWei = await bcToken.connect(accounts[1]).getBuyPrice(ethers.utils.parseEther("2"));
             console.log(priceWei);
             let tx =  await bcToken.connect(accounts[1]).mint(ethers.utils.parseEther("2"), {value: priceWei});
             let receipt = await tx.wait();
@@ -51,7 +51,7 @@ describe("BcToken", function () {
         }
 
 //         {
-//             let amountWei = await bcToken.connect(accounts[1]).getPriceForAmount(ethers.utils.parseEther("2"));
+//             let amountWei = await bcToken.connect(accounts[1]).getSellPrice(ethers.utils.parseEther("1"));
 //             console.log(amountWei);
 //             let amountStr = ethers.utils.formatEther(amountWei);
 //             let amount = parseInt(amountStr, 10);
@@ -69,8 +69,8 @@ describe("BcToken", function () {
 
     it('God mode test', async () => {
         {//Mint
-            let priceWei = await bcToken.connect(accounts[1]).getPriceForAmount(ethers.utils.parseEther("1"));
-            //console.log(priceWei);
+            let priceWei = await bcToken.connect(accounts[1]).getBuyPrice(ethers.utils.parseEther("1"));
+            console.log(priceWei);
             let tx = await bcToken.connect(accounts[2]).mint(ethers.utils.parseEther("1"), {value: priceWei});
             let receipt = await tx.wait();
             expect(receipt.status).to.be.equal(1);
@@ -105,7 +105,7 @@ describe("BcToken", function () {
         }
 
         try { //Expect error message
-            let priceWei = await bcToken.connect(accounts[1]).getPriceForAmount(ethers.utils.parseEther("1"));
+            let priceWei = await bcToken.connect(accounts[1]).getBuyPrice(ethers.utils.parseEther("1"));
             //console.log(priceWei);
             let tx = await bcToken.connect(accounts[3]).mint(ethers.utils.parseEther("1"), {value: priceWei});
             expect(true, "promise should fail").eq(false);
@@ -146,7 +146,7 @@ describe("BcToken", function () {
 
     it('Burn test', async () => {
         {//Price before
-            let price = await bcToken.connect(accounts[1]).getPriceForAmount(ethers.utils.parseEther("1"));
+            let price = await bcToken.connect(accounts[1]).getBuyPrice(ethers.utils.parseEther("1"));
             expect(price).to.be.equal(ethers.utils.parseEther("4.5"));
         }
         {//Burn
@@ -155,8 +155,23 @@ describe("BcToken", function () {
             expect(receipt.status).to.be.equal(1);
         }
         {//Price after
-            let price = await bcToken.connect(accounts[1]).getPriceForAmount(ethers.utils.parseEther("1"));
+            let price = await bcToken.connect(accounts[1]).getBuyPrice(ethers.utils.parseEther("1"));
             expect(price).to.be.equal(ethers.utils.parseEther("3.5"));
+        }
+
+        {//Burn
+            let tx = await bcToken.connect(accounts[0]).burn(ethers.utils.parseEther("1"));
+            let receipt = await tx.wait();
+            expect(receipt.status).to.be.equal(1);
+        }
+        {//Burn
+            let tx = await bcToken.connect(accounts[2]).burn(ethers.utils.parseEther("1"));
+            let receipt = await tx.wait();
+            expect(receipt.status).to.be.equal(1);
+        }
+        {
+            const balance = await ethers.provider.getBalance(bcToken.address);
+            console.log(balance);
         }
     })
 });
